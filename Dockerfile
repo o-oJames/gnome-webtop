@@ -49,6 +49,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     x11vnc \
     novnc \
     websockify \
+    # ── Audio (PulseAudio virtual sink → browser) ──
+    pulseaudio \
+    pulseaudio-utils \
+    libpulse0 \
     # ── X11 / D-Bus ──
     dbus-x11 \
     x11-xserver-utils \
@@ -56,9 +60,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xfonts-base \
     xfonts-100dpi \
     xfonts-75dpi \
-    # ── Python for fake-logind ──
+    # ── Python for fake-logind + audio bridge ──
+    python3 \
     python3-gi \
     python3-gi-cairo \
+    python3-websockets \
     gir1.2-gio-2.0 \
     # ── Utilities ──
     sudo \
@@ -108,13 +114,20 @@ RUN useradd -m -s /bin/bash vncuser \
 RUN mkdir -p /home/vncuser/.vnc \
     && chown -R vncuser:vncuser /home/vncuser
 
+# Install custom webtop landing page (noVNC + audio player)
+COPY webtop.html /usr/share/novnc/webtop.html
+COPY novnc-audio.js /usr/share/novnc/novnc-audio.js
+RUN sed -i "s#</body>#<script src=\"novnc-audio.js\"></script></body>#" /usr/share/novnc/vnc.html
+
 COPY fake-logind.py /usr/local/bin/fake-logind.py
-RUN chmod +x /usr/local/bin/fake-logind.py
+COPY audio-bridge.py /usr/local/bin/audio-bridge.py
+RUN chmod +x /usr/local/bin/fake-logind.py /usr/local/bin/audio-bridge.py
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-EXPOSE 6901
+# noVNC web + audio WebSocket
+EXPOSE 6901 6902
 
 USER vncuser
 WORKDIR /home/vncuser

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GNOME Webtop</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; background: #1a1a2e; font-family: system-ui, sans-serif; }
+  #vnc-frame { width: 100%; height: 100%; border: none; }
+
+  /* Audio toggle button */
+  #audio-btn {
+    position: fixed; bottom: 16px; right: 16px; z-index: 9999;
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 18px; border: none; border-radius: 24px;
+    background: #e94560; color: #fff; font-size: 14px; font-weight: 600;
+    cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,.4);
+    transition: background .2s, transform .1s;
+  }
+  #audio-btn:hover { transform: scale(1.05); }
+  #audio-btn.on { background: #0f3460; }
+  #audio-btn .icon { font-size: 18px; }
+  #audio-status {
+    position: fixed; bottom: 60px; right: 16px; z-index: 9999;
+    padding: 6px 12px; border-radius: 8px; font-size: 12px;
+    background: rgba(0,0,0,.7); color: #ccc; display: none;
+  }
+</style>
+</head>
+<body>
+
+<iframe id="vnc-frame" src="vnc.html?autoconnect=true&resize=scale" allow="autoplay"></iframe>
+
+<button id="audio-btn" onclick="toggleAudio()">
+  <span class="icon" id="audio-icon">🔇</span>
+  <span id="audio-label">Enable Sound</span>
+</button>
+<div id="audio-status"></div>
+
+<script>
+// ─── Audio-over-WebSocket player ──────────────────────────────────
+const WS_PORT = 6902;
+const SAMPLE_RATE = 44100;
+const CHANNELS = 2;
+
+let audioCtx = null;
+let ws = null;
+let audioOn = false;
+let nextStartTime = 0;
+let statusTimer = null;
+
+function showStatus(msg, ms) {
+  const el = document.getElementById('audio-status');
+  el.textContent = msg;
+  el.style.display = 'block';
+  clearTimeout(statusTimer);
+  if (ms) statusTimer = setTimeout(() => el.style.display = 'none', ms);
+}
+
+function toggleAudio() {
+  if (audioOn) { stopAudio(); } else { startAudio(); }
+}
+
+function startAudio() {
+  // Browser requires user gesture to create AudioContext
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: SAMPLE_RATE });
+  nextStartTime = 0;
+
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const url = `${proto}://${location.hostname}:${WS_PORT}`;
+  ws = new WebSocket(url);
+  ws.binaryType = 'arraybuffer';
+
+  ws.onopen = () => {
+    audioOn = true;
+    document.getElementById('audio-icon').textContent = '🔊';
+    document.getElementById('audio-label').textContent = 'Sound On';
+    document.getElementById('audio-btn').classList.add('on');
+    showStatus('Audio connected', 2000);
+  };
+
+  ws.onmessage = (event) => {
+    if (!audioCtx || audioCtx.state === 'closed') return;
+    const int16 = new Int16Array(event.data);
+    const numFrames = int16.length / CHANNELS;
+    if (numFrames === 0) return;
+
+    const buffer = audioCtx.createBuffer(CHANNELS, numFrames, SAMPLE_RATE);
+    for (let ch = 0; ch < CHANNELS; ch++) {
+      const data = buffer.getChannelData(ch);
+      for (let i = 0; i < numFrames; i++) {
+        data[i] = int16[i * CHANNELS + ch] / 32768.0;
+      }
+    }
+
+    const source = audioCtx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(audioCtx.destination);
+
+    const now = audioCtx.currentTime;
+    if (nextStartTime < now) nextStartTime = now + 0.01;
+    source.start(nextStartTime);
+    nextStartTime += buffer.duration;
+
+    // Prevent unbounded buffer growth (drop if >500ms ahead)
+    if (nextStartTime - now > 0.5) nextStartTime = now + 0.01;
+  };
+
+  ws.onclose = () => {
+    if (audioOn) showStatus('Audio disconnected — click to reconnect', 0);
+    audioOn = false;
+    document.getElementById('audio-icon').textContent = '🔇';
+    document.getElementById('audio-label').textContent = 'Enable Sound';
+    document.getElementById('audio-btn').classList.remove('on');
+  };
+
+  ws.onerror = () => {
+    showStatus('Cannot reach audio server (port ' + WS_PORT + ')', 4000);
+  };
+}
+
+function stopAudio() {
+  audioOn = false;
+  if (ws) { ws.onclose = null; ws.close(); ws = null; }
+  if (audioCtx) { audioCtx.close(); audioCtx = null; }
+  document.getElementById('audio-icon').textContent = '🔇';
+  document.getElementById('audio-label').textContent = 'Enable Sound';
+  document.getElementById('audio-btn').classList.remove('on');
+  showStatus('Audio disabled', 2000);
+}
+</script>
+</body>
+</html>

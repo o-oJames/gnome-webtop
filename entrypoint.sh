@@ -8,6 +8,7 @@ VNC_DEPTH="${VNC_DEPTH:-24}"
 DISPLAY_NUM=":1"
 VNC_PORT=5901
 NOVNC_PORT=6901
+AUDIO_WS_PORT=6902
 export DISPLAY=${DISPLAY_NUM}
 
 # ─── Mesa / GL — software rendering via llvmpipe ─────────────────────
@@ -31,7 +32,8 @@ export GNOME_SHELL_SESSION_MODE=ubuntu
 echo "═══════════════════════════════════════════════"
 echo "  GNOME Webtop Container"
 echo "  Resolution : ${RES}"
-echo "  noVNC      : http://localhost:${NOVNC_PORT}/vnc.html"
+echo "  noVNC      : http://localhost:${NOVNC_PORT}/webtop.html"
+echo "  Audio WS   : ws://localhost:${AUDIO_WS_PORT}"
 echo "═══════════════════════════════════════════════"
 
 # ─── 1. Prerequisites ────────────────────────────────────────────────
@@ -78,7 +80,31 @@ export DBUS_SESSION_BUS_ADDRESS
 export DBUS_SESSION_BUS_PID
 echo "✅ Session D-Bus"
 
-# ─── 5. Start Xvfb ──────────────────────────────────────────────────
+# ─── 5. PulseAudio (virtual sink for browser audio passthrough) ─────
+echo "🔊 Starting PulseAudio..."
+# Start PulseAudio in daemon mode with a virtual output sink
+pulseaudio --start --exit-idle-time=-1 --daemonize=true \
+    --load="module-null-sink sink_name=webtop_output sink_properties=device.description=Webtop_Virtual_Output" \
+    2>/dev/null || pulseaudio --start --exit-idle-time=-1 2>/dev/null || true
+sleep 1
+
+# Ensure the virtual sink exists (in case --load didn't work)
+pactl load-module module-null-sink sink_name=webtop_output \
+    sink_properties=device.description=Webtop_Virtual_Output 2>/dev/null || true
+
+# Set it as the default output so all apps play to it
+pactl set-default-sink webtop_output 2>/dev/null || true
+
+# Export for all child processes
+export PULSE_SERVER="unix:${XDG_RUNTIME_DIR}/pulse/native"
+echo "✅ PulseAudio (default sink: webtop_output)"
+
+# ─── 6. Audio WebSocket bridge ──────────────────────────────────────
+python3 /usr/local/bin/audio-bridge.py ${AUDIO_WS_PORT} &
+AUDIO_PID=$!
+echo "✅ Audio bridge (PID ${AUDIO_PID}, port ${AUDIO_WS_PORT})"
+
+# ─── 7. Start Xvfb ──────────────────────────────────────────────────
 # Clean up stale files from previous run (container stop/start)
 sudo rm -f /tmp/.X1-lock /tmp/.X11-unix/X1
 
@@ -102,14 +128,14 @@ if ! xdpyinfo -display ${DISPLAY_NUM} >/dev/null 2>&1; then
 fi
 echo "✅ Xvfb running (PID ${XVFB_PID})"
 
-# Set the root window cursor to a normal arrow (not cross)
+# Set the root window cursor to a normal arrow
 xsetroot -cursor_name left_ptr -display ${DISPLAY_NUM} 2>/dev/null || true
 
-# ─── 6. Verify GL ────────────────────────────────────────────────────
+# ─── 8. Verify GL ────────────────────────────────────────────────────
 GL_RENDERER=$(glxinfo -display ${DISPLAY_NUM} 2>/dev/null | grep "OpenGL renderer" || echo "unknown")
 echo "🔍 ${GL_RENDERER}"
 
-# ─── 7. Start x11vnc ────────────────────────────────────────────────
+# ─── 9. Start x11vnc ────────────────────────────────────────────────
 x11vnc -display ${DISPLAY_NUM} \
     -rfbport ${VNC_PORT} \
     -passwd "${VNC_PASS}" \
@@ -119,19 +145,17 @@ x11vnc -display ${DISPLAY_NUM} \
     -o /home/vncuser/.x11vnc.log
 echo "✅ x11vnc on port ${VNC_PORT}"
 
-# ─── 8. Start noVNC ─────────────────────────────────────────────────
+# ─── 10. Start noVNC ─────────────────────────────────────────────────
 websockify --web /usr/share/novnc "0.0.0.0:${NOVNC_PORT}" "localhost:${VNC_PORT}" &
 sleep 1
 echo "✅ noVNC on port ${NOVNC_PORT}"
 
-# ─── 9. Start GNOME Desktop (direct, no gnome-session) ───────────────
+# ─── 11. Start GNOME Desktop (direct, no gnome-session) ──────────────
 echo "🚀 Starting GNOME desktop..."
 
-# gnome-settings-daemon (themes, keyboard, power, etc.)
 /usr/libexec/gnome-settings-daemon &>/dev/null &
 sleep 2
 
-# Start GNOME Shell directly (bypasses gnome-session acceleration check)
 echo "   Starting GNOME Shell (direct)..."
 gnome-shell --x11 > ~/.gnome-shell.log 2>&1 &
 SHELL_PID=$!
@@ -159,7 +183,7 @@ else
     fi
 fi
 
-# ─── 10. Desktop polish ──────────────────────────────────────────────
+# ─── 12. Desktop polish ──────────────────────────────────────────────
 sleep 2
 
 # Set icon theme, GTK theme, and cursor theme explicitly
@@ -178,7 +202,7 @@ fi
 
 # Set favorite apps in dock
 gsettings set org.gnome.shell favorite-apps \
-    "['org.gnome.Terminal.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Settings.desktop']" 2>/dev/null || true
+    "['org.gnome.Terminal.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Settings.desktop', 'firefox.desktop']" 2>/dev/null || true
 
 # Enable the Show Apps button at the bottom of the dock
 gsettings set org.gnome.shell.extensions.dash-to-dock show-apps-at-top false 2>/dev/null || true
@@ -186,14 +210,18 @@ gsettings set org.gnome.shell.extensions.dash-to-dock show-show-apps-button true
 gsettings set org.gnome.shell.extensions.dash-to-dock dock-fixed true 2>/dev/null || true
 gsettings set org.gnome.shell.extensions.dash-to-dock extend-height true 2>/dev/null || true
 
+# Set PulseAudio as the sound output in GNOME settings
+gsettings set org.gnome.desktop.sound event-sounds true 2>/dev/null || true
+
 # Open a terminal
 gnome-terminal &>/dev/null &
 
 echo ""
 echo "═══════════════════════════════════════════════"
 echo "  ✅ Desktop ready!"
-echo "  👉 http://localhost:${NOVNC_PORT}/vnc.html"
+echo "  👉 http://localhost:${NOVNC_PORT}/webtop.html"
 echo "  Password: ${VNC_PASS}"
+echo "  🔊 Click 'Enable Sound' button for audio"
 echo "═══════════════════════════════════════════════"
 
 wait ${XVFB_PID}
