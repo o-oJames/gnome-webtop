@@ -1,0 +1,26 @@
+services:
+  gnome-webtop:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gnome-webtop
+    hostname: gnome-webtop
+    ports:
+      - "6901:6901"    # noVNC web interface
+    environment:
+      - VNC_PASSWORD=password
+      - VNC_RESOLUTION=1920x1080
+      - VNC_DEPTH=24
+    volumes:
+      # Persist home directory (downloads, configs, etc.)
+      - gnome-home:/home/vncuser
+    shm_size: "2gb"     # Prevents Chrome/GTK crashes
+    restart: unless-stopped
+    # Uncomment below if you have a GPU and want hardware acceleration:
+    # devices:
+    #   - /dev/dri:/dev/dri
+    # environment:
+    #   - LIBGL_ALWAYS_SOFTWARE=0
+
+volumes:
+  gnome-home:
