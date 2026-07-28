@@ -96,7 +96,7 @@ RUN install -d -m 0755 /etc/apt/keyrings \
     && rm -rf /var/lib/apt/lists/*
 
 # Register SVG pixbuf loader (fixes red-square icons) + rebuild icon caches
-RUN /usr/lib/$(dpkg-architecture --query DEB_HOST_MULTIARCH)/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders --update-cache
+RUN /usr/lib/*/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders --update-cache
 
 # Rebuild icon caches so icons render at correct sizes (fixes blurriness)
 RUN gtk-update-icon-cache -f -t /usr/share/icons/Yaru 2>/dev/null || true \
