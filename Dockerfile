@@ -26,6 +26,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     hicolor-icon-theme \
     ubuntu-mono \
     dmz-cursor-theme \
+    librsvg2-common \
+    libgdk-pixbuf2.0-bin \
     # ── Desktop experience: dock, icons, backgrounds ──
     gnome-shell-extension-ubuntu-dock \
     gnome-shell-extension-desktop-icons-ng \
@@ -92,6 +94,9 @@ RUN install -d -m 0755 /etc/apt/keyrings \
     && apt-get install -y --no-install-recommends firefox \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Register SVG pixbuf loader (fixes red-square icons) + rebuild icon caches
+RUN /usr/lib/$(dpkg-architecture --query DEB_HOST_MULTIARCH)/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders --update-cache
 
 # Rebuild icon caches so icons render at correct sizes (fixes blurriness)
 RUN gtk-update-icon-cache -f -t /usr/share/icons/Yaru 2>/dev/null || true \
