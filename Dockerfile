@@ -1,3 +1,43 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# Stage 1 — build the "Mount Manager" app (Rust/GTK4) into a .deb + apt repo
+# ═══════════════════════════════════════════════════════════════════════════
+FROM ubuntu:24.04 AS mount-manager-build
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    CARGO_HOME=/usr/local/cargo \
+    RUSTUP_HOME=/usr/local/rustup \
+    PATH=/usr/local/cargo/bin:$PATH
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        pkg-config \
+        curl \
+        ca-certificates \
+        dpkg-dev \
+        debhelper \
+        apt-utils \
+        gzip \
+        python3 \
+        libgtk-4-dev \
+        libadwaita-1-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Ubuntu 24.04 ships rustc 1.75, which is older than what gtk4-rs 0.9 and its
+# dependencies expect, so the toolchain comes from rustup.
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+      | sh -s -- -y --profile minimal --default-toolchain 1.85.0
+
+WORKDIR /src/mount-manager
+COPY mount-manager/ /src/mount-manager/
+RUN cargo generate-lockfile
+RUN ./packaging/build-deb.sh
+# Turn dist/*.deb into a file:// APT repository so the package can be installed
+# (and re-installed) with plain `apt-get install mount-manager`.
+RUN ./packaging/make-apt-repo.sh /src/mount-manager/dist /src/mount-manager/dist/repo
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Stage 2 — the GNOME webtop image
+# ═══════════════════════════════════════════════════════════════════════════
 FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -10,6 +50,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gnome-shell \
     gnome-session \
     gnome-terminal \
+    nautilus-extension-gnome-terminal \
     gnome-control-center \
     gnome-settings-daemon \
     gnome-tweaks \
@@ -78,10 +119,39 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fonts-liberation \
     fonts-noto-color-emoji \
     at-spi2-core \
+    python3-nautilus \
     xdg-user-dirs \
+    # ── SMB/CIFS client (Nautilus network shares + mount + CLI) ──
+    gvfs-backends \
+    gvfs-fuse \
+    cifs-utils \
+    smbclient \
     && locale-gen en_US.UTF-8 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# ── Mount Manager: publish the local APT repo, then install the app ────────
+# The .deb is built in the stage above. Publishing the repository means the
+# container can also run `apt-get install --reinstall mount-manager` later.
+COPY --from=mount-manager-build /src/mount-manager/dist/repo /opt/mount-manager/repo
+RUN echo "deb [trusted=yes] file:/opt/mount-manager/repo stable main" \
+       > /etc/apt/sources.list.d/mount-manager.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        mount-manager \
+        policykit-1 \
+        sshfs \
+        nfs-common \
+        davfs2 \
+        avahi-utils \
+        libsecret-tools \
+        libglib2.0-bin \
+        fuse3 \
+        psmisc \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && dpkg -l mount-manager \
+    && mount-manager --version
 
 # Install Firefox from Mozilla official APT repo (Ubuntu 24.04 firefox pkg is a snap stub)
 RUN install -d -m 0755 /etc/apt/keyrings \

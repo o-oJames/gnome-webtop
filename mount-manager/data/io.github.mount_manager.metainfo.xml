@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- AppStream metadata: makes the app show up with a description in GNOME
+     Software / `appstreamcli`. Validate with: appstreamcli validate -->
+<component type="desktop-application">
+  <id>io.github.mount_manager</id>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Mount Manager</name>
+  <summary>Mount and manage network shares and external drives</summary>
+
+  <description>
+    <p>
+      Mount Manager is a small GNOME application that keeps every mounted
+      external path in one place. It lists what is currently mounted, lets you
+      unmount it (even when it is busy), and connects new shares with a few
+      clicks — no terminal, no editing <code>/etc/fstab</code> by hand.
+    </p>
+    <p>Supported protocols:</p>
+    <ul>
+      <li>SMB / CIFS — Windows shares, Samba and NAS appliances</li>
+      <li>NFS — versions 3 and 4, with automatic fallback</li>
+      <li>SSHFS / SFTP — any folder over SSH</li>
+      <li>WebDAV — HTTP(S) filesystems, including Nextcloud and ownCloud</li>
+      <li>FTP / FTPS</li>
+      <li>Local block devices — USB sticks, SD cards, external disks, images</li>
+      <li>Bind mounts and any other filesystem type</li>
+    </ul>
+    <p>Highlights:</p>
+    <ul>
+      <li>Browses the network (mDNS/Avahi) and lists the shares a server offers</li>
+      <li>Tests a connection before mounting it and explains failures in plain language</li>
+      <li>Asks for your password only when root rights are really needed (polkit, with a sudo fallback)</li>
+      <li>Can mount without admin rights through the user session (GVFS/FUSE)</li>
+      <li>Optionally writes a safe <code>/etc/fstab</code> entry so shares come back after a reboot, always with a backup</li>
+      <li>Stores passwords in the GNOME keyring when available</li>
+      <li>Full command line interface for scripts and headless systems</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">io.github.mount_manager.desktop</launchable>
+  <binary>mount-manager</binary>
+
+  <categories>
+    <category>System</category>
+    <category>Filesystem</category>
+  </categories>
+
+  <provides>
+    <binary>mount-manager</binary>
+    <binary>mount-manager-helper</binary>
+  </provides>
+
+  <requires>
+    <display_length compare="ge">360</display_length>
+  </requires>
+
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+    <control>touch</control>
+  </supports>
+
+  <releases>
+    <release version="1.0.0" date="2026-09-21">
+      <description>
+        <p>First release.</p>
+        <ul>
+          <li>SMB, NFS, SSHFS, WebDAV, FTP, block device and bind mounts</li>
+          <li>Network discovery, connection testing, saved shares</li>
+          <li>polkit/sudo escalation and /etc/fstab management</li>
+          <li>Command line interface and Debian package</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
+
+  <developer id="io.github.mount_manager">
+    <name>Mount Manager contributors</name>
+  </developer>
+
+  <content_rating type="oars-1.1"/>
+
+  <url type="homepage">https://github.com/o-oJames/docker_gnome/tree/main/mount-manager</url>
+  <url type="bugtracker">https://github.com/o-oJames/docker_gnome/issues</url>
+
+</component>

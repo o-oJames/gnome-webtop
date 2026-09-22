@@ -1,0 +1,15 @@
+mount-manager (1.0.0) unstable; urgency=medium
+
+  * Initial release.
+    - Mount, unmount and inspect SMB/CIFS, NFS, SSHFS/SFTP, WebDAV, FTP,
+      block devices and bind mounts from a GTK4/libadwaita window.
+    - Network discovery through Avahi/mDNS, share and export listing,
+      connection testing with actionable error messages.
+    - Saved shares, optional /etc/fstab persistence with automatic backups,
+      GNOME keyring integration and Files sidebar bookmarks.
+    - Privilege escalation via polkit (pkexec) with an in-app sudo password
+      prompt fallback for containers and minimal sessions.
+    - Command line interface (list, mount, umount, devices, shares, fstab,
+      discover, auto-mount) and bash completion.
+
+ -- Mount Manager maintainers <maintainer@example.com>  Mon, 21 Sep 2026 12:00:00 +0930

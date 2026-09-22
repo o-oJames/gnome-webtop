@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<!--
+  polkit action for the Mount Manager privileged helper.
+
+  `auth_admin_keep` means: authenticate as an administrator and remember the
+  authorisation for a short while, so mounting several shares in a row only
+  asks once. The exec.path annotation restricts the action to this exact
+  binary, so pkexec cannot be talked into running anything else.
+-->
+<policyconfig>
+  <vendor>Mount Manager</vendor>
+  <vendor_url>https://github.com/o-oJames/docker_gnome/tree/main/mount-manager</vendor_url>
+
+  <action id="io.github.mount_manager.manage">
+    <description>Manage mounted filesystems</description>
+    <description xml:lang="de">Eingehängte Dateisysteme verwalten</description>
+    <message>Authentication is required to mount or unmount filesystems</message>
+    <message xml:lang="de">Zur Verwaltung von Einhängepunkten ist eine Authentifizierung erforderlich</message>
+    <icon_name>mount-manager</icon_name>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/lib/mount-manager/mount-manager-helper</annotate>
+    <annotate key="org.freedesktop.policykit.exec.allow_gui">true</annotate>
+  </action>
+</policyconfig>

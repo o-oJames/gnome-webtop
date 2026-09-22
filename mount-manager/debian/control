@@ -1,0 +1,40 @@
+Source: mount-manager
+Section: admin
+Priority: optional
+Maintainer: Mount Manager maintainers <maintainer@example.com>
+Build-Depends: debhelper-compat (= 13),
+               cargo,
+               rustc,
+               pkg-config,
+               libgtk-4-dev,
+               libadwaita-1-dev (>= 1.4)
+Standards-Version: 4.6.2
+Rules-Requires-Root: no
+Homepage: https://github.com/o-oJames/docker_gnome/tree/main/mount-manager
+Vcs-Browser: https://github.com/o-oJames/docker_gnome/tree/main/mount-manager
+Vcs-Git: https://github.com/o-oJames/docker_gnome.git
+
+Package: mount-manager
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, util-linux, gvfs-backends, cifs-utils, sudo | policykit-1
+Recommends: sshfs, nfs-common, smbclient, davfs2, avahi-utils, libsecret-tools, libglib2.0-bin, policykit-1, psmisc
+Suggests: gnome-keyring, rclone
+Description: manage mounted external paths (SMB, NFS, SFTP, WebDAV, FTP, disks)
+ Mount Manager is a GTK4/libadwaita application that keeps every mounted
+ external path in one place. It shows what is currently mounted, unmounts
+ busy or stale filesystems, and connects new shares through a form instead
+ of a terminal.
+ .
+ Supported protocols: SMB/CIFS (Windows shares, Samba, NAS), NFS v3/v4,
+ SSHFS/SFTP, WebDAV over HTTP(S), FTP, local block devices (USB sticks, SD
+ cards, external disks) and bind mounts. Anything else can be mounted with
+ the "custom" filesystem type.
+ .
+ Features: mDNS/Avahi network browsing, share/export listing, connection
+ testing, saved shares with optional /etc/fstab persistence (always with a
+ backup), keyring password storage, mounting without admin rights through
+ GVFS/FUSE, and a full command line interface for scripts.
+ .
+ Administrator rights are obtained through polkit (pkexec) with a sudo
+ fallback that asks for the password inside the application, so it also works
+ in containers that have no authentication agent.

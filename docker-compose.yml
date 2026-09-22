@@ -11,16 +11,32 @@ services:
       - VNC_PASSWORD=password
       - VNC_RESOLUTION=1920x1080
       - VNC_DEPTH=24
+      # 1 = mount every share saved with "mount at login" when the desktop starts
+      - MOUNT_MANAGER_AUTOMOUNT=0
     volumes:
       # Persist home directory (downloads, configs, etc.)
       - gnome-home:/home/vncuser
     shm_size: "2gb"     # Prevents Chrome/GTK crashes
     restart: unless-stopped
-    # Uncomment below if you have a GPU and want hardware acceleration:
-    # devices:
-    #   - /dev/dri:/dev/dri
-    # environment:
-    #   - LIBGL_ALWAYS_SOFTWARE=0
+    # ── Needed by Mount Manager for real system mounts ─────────────────────
+    # Docker's default seccomp profile blocks mount(2), and mount.cifs needs a
+    # few extra capabilities to drop/raise its own privilege set.
+    # Remove this block if you don't want the container to be able to mount
+    # anything (Mount Manager still works with GVFS user-session mounts).
+    cap_add:
+      - SYS_ADMIN        # mount(2) / umount(2)
+      - DAC_OVERRIDE     # mount.cifs accessing the mount point
+      - DAC_READ_SEARCH
+      - SETUID           # mount.cifs uid= option
+      - SETGID
+      - CHOWN
+    devices:
+      - /dev/fuse        # sshfs / FUSE mounts
+    security_opt:
+      - seccomp=unconfined
+      - apparmor=unconfined
+    # GPU acceleration: add `/dev/dri:/dev/dri` to the `devices:` list above and
+    # `LIBGL_ALWAYS_SOFTWARE=0` to the environment block.
 
 volumes:
   gnome-home:

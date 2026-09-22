@@ -1,0 +1,51 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Build environment for the mount-manager Debian package.
+#
+#   docker build -f packaging/Dockerfile.build --target deps   -t mm-builder .
+#   docker build -f packaging/Dockerfile.build --target package -t mm-package .
+#   docker create --name mm-tmp mm-package && docker cp mm-tmp:/src/dist ./dist
+#
+# `deps`  = toolchain only (handy for `cargo check` while developing:
+#           docker run --rm -v "$PWD":/src -w /src mm-builder cargo check)
+# `package` = builds the .deb and a local APT repository in /src/dist
+#
+# Rust comes from rustup instead of the Ubuntu archive because Ubuntu 24.04
+# ships rustc 1.75, which is older than what gtk4-rs 0.9 / libadwaita-rs 0.7
+# transitive dependencies expect.
+# ─────────────────────────────────────────────────────────────────────────────
+FROM ubuntu:24.04 AS deps
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    CARGO_HOME=/usr/local/cargo \
+    RUSTUP_HOME=/usr/local/rustup \
+    PATH=/usr/local/cargo/bin:$PATH \
+    RUST_VERSION=1.85.0
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        pkg-config \
+        curl \
+        ca-certificates \
+        file \
+        dpkg-dev \
+        debhelper \
+        apt-utils \
+        gzip \
+        python3 \
+        libgtk-4-dev \
+        libadwaita-1-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+      | sh -s -- -y --profile minimal --default-toolchain "$RUST_VERSION" \
+    && rustc --version && cargo --version
+
+WORKDIR /src
+
+# ── build the package ────────────────────────────────────────────────────────
+FROM deps AS package
+COPY . /src
+RUN cargo generate-lockfile
+RUN ./packaging/build-deb.sh
+RUN ./packaging/make-apt-repo.sh /src/dist /src/dist/repo
+RUN dpkg-deb --info dist/*.deb && ls -la dist dist/repo

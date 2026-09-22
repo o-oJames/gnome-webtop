@@ -3,3 +3,5 @@
 *.md
 .DS_Store
 docker-compose.yml
+mount-manager/target
+mount-manager/dist

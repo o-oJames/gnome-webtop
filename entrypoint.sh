@@ -202,7 +202,7 @@ fi
 
 # Set favorite apps in dock
 gsettings set org.gnome.shell favorite-apps \
-    "['org.gnome.Terminal.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Settings.desktop', 'firefox.desktop']" 2>/dev/null || true
+    "['org.gnome.Terminal.desktop', 'org.gnome.Nautilus.desktop', 'io.github.mount_manager.desktop', 'org.gnome.Settings.desktop', 'firefox.desktop']" 2>/dev/null || true
 
 # Enable the Show Apps button at the bottom of the dock
 gsettings set org.gnome.shell.extensions.dash-to-dock show-apps-at-top false 2>/dev/null || true
@@ -212,6 +212,15 @@ gsettings set org.gnome.shell.extensions.dash-to-dock extend-height true 2>/dev/
 
 # Set PulseAudio as the sound output in GNOME settings
 gsettings set org.gnome.desktop.sound event-sounds true 2>/dev/null || true
+
+# ─── 13. Optional: mount the saved network shares ────────────────────────────
+# Mount Manager (installed from ./mount-manager) can bring back everything that
+# was saved with "mount at login". Off by default so a missing NAS never slows
+# the desktop down; enable with MOUNT_MANAGER_AUTOMOUNT=1.
+if [ "${MOUNT_MANAGER_AUTOMOUNT:-0}" = "1" ] && command -v mount-manager >/dev/null 2>&1; then
+    echo "🔗 Mounting saved shares..."
+    MOUNT_MANAGER_QUIET=1 timeout 90 mount-manager auto-mount --quiet >/dev/null 2>&1 || true
+fi
 
 # Open a terminal
 gnome-terminal &>/dev/null &

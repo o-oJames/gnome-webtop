@@ -1,0 +1,5 @@
+# Pinned for reproducible builds (gtk4-rs 0.9 / libadwaita-rs 0.7 need >= 1.70).
+[toolchain]
+channel = "1.85.0"
+components = ["rustfmt", "clippy"]
+profile = "minimal"

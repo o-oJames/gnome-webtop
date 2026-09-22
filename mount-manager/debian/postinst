@@ -1,0 +1,36 @@
+#!/bin/sh
+# postinst for mount-manager
+set -e
+
+HELPER=/usr/lib/mount-manager/mount-manager-helper
+
+# pkexec refuses to run a helper that is not owned by root or that anybody else
+# can write to, so make that explicit here.
+if [ -e "$HELPER" ]; then
+    chown root:root "$HELPER"
+    chmod 0755 "$HELPER"
+fi
+
+# State directory for credential files (root only).
+install -d -m 0700 -o root -g root /etc/mount-manager/credentials
+install -d -m 0700 -o root -g root /run/mount-manager/credentials 2>/dev/null || true
+
+# Make the app show up in the app grid / GNOME Software right away.
+if command -v update-desktop-database >/dev/null 2>&1; then
+    update-desktop-database -q /usr/share/applications || true
+fi
+if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+    gtk-update-icon-cache -f -t /usr/share/icons/hicolor >/dev/null 2>&1 || true
+fi
+if command -v appstreamcli >/dev/null 2>&1; then
+    appstreamcli refresh-cache --force >/dev/null 2>&1 || true
+fi
+# Reload polkit so the new action is known without a reboot.
+if command -v pkaction >/dev/null 2>&1; then
+    pkaction --action-id io.github.mount_manager.manage >/dev/null 2>&1 || true
+fi
+
+# shellcheck disable=SC1091
+[ -f /usr/share/bash-completion/bash_completion ] && . /usr/share/bash-completion/bash_completion || true
+
+exit 0

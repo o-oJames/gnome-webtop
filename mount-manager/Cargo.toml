@@ -1,0 +1,48 @@
+[package]
+name = "mount-manager"
+version = "1.0.0"
+authors = ["Mount Manager contributors"]
+description = "GTK4/libadwaita tool to mount, unmount and manage external paths: SMB/CIFS, NFS, SFTP/SSHFS, WebDAV, FTP, block devices and bind mounts"
+documentation = "https://github.com/o-oJames/docker_gnome/tree/main/mount-manager"
+readme = "README.md"
+license = "MIT"
+edition = "2021"
+rust-version = "1.80"
+keywords = ["mount", "smb", "nfs", "sshfs", "gnome"]
+categories = ["filesystem", "gui", "os::linux-apis"]
+default-run = "mount-manager"
+
+[lib]
+name = "mount_manager"
+path = "src/lib.rs"
+
+# Graphical front-end (also usable as a CLI: `mount-manager list|mount|umount|...`)
+[[bin]]
+name = "mount-manager"
+path = "src/main.rs"
+
+# Small privileged helper executed through pkexec/sudo. It never links GTK so it
+# can be built with `--no-default-features` (see packaging/build-deb.sh).
+[[bin]]
+name = "mount-manager-helper"
+path = "src/bin/mount-manager-helper.rs"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+libc = "0.2"
+
+# GUI stack (optional so the root helper stays lean)
+gtk = { package = "gtk4", version = "0.9", optional = true }
+adw = { package = "libadwaita", version = "0.7", features = ["v1_4"], optional = true }
+glib = { version = "0.20", optional = true }
+
+[features]
+default = ["gui"]
+gui = ["dep:gtk", "dep:adw", "dep:glib"]
+
+[profile.release]
+opt-level = 2
+lto = "thin"
+codegen-units = 4
+strip = true

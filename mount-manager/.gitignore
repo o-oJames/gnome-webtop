@@ -1,0 +1,11 @@
+/target
+/dist
+Cargo.lock.orig
+*.deb
+*.buildinfo
+*.changes
+debian/.debhelper
+debian/mount-manager
+debian/mount-manager.substvars
+debian/files
+debian/debhelper-build-stamp

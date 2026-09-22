@@ -1,0 +1,32 @@
+#!/usr/bin/make -f
+# Debian packaging for Mount Manager.
+#
+# The heavy lifting (two cargo builds + file layout) lives in
+# packaging/build-deb.sh so that `dpkg-buildpackage` and the plain
+# `dpkg-deb` path used by the Docker image stay identical.
+
+export CARGO_HOME := $(CURDIR)/debian/cargo-home
+export RUSTFLAGS := $(RUSTFLAGS)
+export DEB_BUILD_OPTIONS ?=
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	# nothing to configure
+
+override_dh_auto_build:
+	# done in the install step so staging and building stay together
+
+override_dh_auto_test:
+	cargo test --release --lib -- --test-threads=1
+
+override_dh_auto_install:
+	./packaging/build-deb.sh --stage debian/mount-manager
+
+override_dh_auto_clean:
+	cargo clean || true
+	rm -rf debian/mount-manager dist
+
+# Rust binaries already carry their own debug info handling.
+override_dh_dwz:

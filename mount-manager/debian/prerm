@@ -1,0 +1,13 @@
+#!/bin/sh
+# prerm for mount-manager
+set -e
+
+# Nothing to stop: the app has no daemon. We only warn when a mount that this
+# app configured is still active.
+if command -v mountpoint >/dev/null 2>&1 && [ -d /etc/mount-manager ]; then
+    for cred in /etc/mount-manager/credentials/*.cred; do
+        [ -e "$cred" ] || continue
+    done
+fi
+
+exit 0

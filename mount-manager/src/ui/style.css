@@ -1,0 +1,78 @@
+/* Mount Manager — application stylesheet.
+ *
+ * Colours come from libadwaita's palette (@accent_color, @success_color, ...)
+ * so the app follows the light/dark preference automatically.
+ */
+
+/* ── list rows ─────────────────────────────────────────────────────────── */
+list.boxed-list > row {
+    padding: 0;
+}
+
+list.boxed-list > row > box {
+    border-radius: 0;
+}
+
+/* ── badges ────────────────────────────────────────────────────────────── */
+.mount-badge {
+    font-size: 0.72em;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background-color: alpha(@view_fg_color, 0.12);
+    color: @view_fg_color;
+}
+
+.badge-smb   { background-color: alpha(#3584e4, 0.22); color: #62a0ea; }
+.badge-nfs   { background-color: alpha(#26a269, 0.22); color: #8ff0a4; }
+.badge-ssh   { background-color: alpha(#e5a50a, 0.22); color: #f8e45c; }
+.badge-web   { background-color: alpha(#9141ac, 0.22); color: #dc8add; }
+.badge-ftp   { background-color: alpha(#c64600, 0.22); color: #ffbe6f; }
+.badge-disk  { background-color: alpha(@view_fg_color, 0.14); }
+.badge-bind  { background-color: alpha(#1c71d8, 0.18); }
+.badge-other { background-color: alpha(@view_fg_color, 0.10); }
+
+.badge-managed { background-color: alpha(#26a269, 0.20); color: #8ff0a4; }
+.badge-ok      { background-color: alpha(#26a269, 0.24); color: #8ff0a4; }
+.badge-warn    { background-color: alpha(#e5a50a, 0.24); color: #f8e45c; }
+
+/* ── text blocks ───────────────────────────────────────────────────────── */
+.detail-view {
+    padding: 8px 10px;
+    border-radius: 8px;
+    background-color: alpha(@view_fg_color, 0.06);
+    font-size: 0.85em;
+}
+
+.test-result {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background-color: alpha(@view_fg_color, 0.05);
+}
+
+.error-text { color: @destructive_color; }
+.ok-text    { color: @success_color; }
+
+.log-ok    { color: @success_color; }
+.log-warn  { color: @warning_color; }
+.log-error { color: @destructive_color; }
+
+/* ── misc ──────────────────────────────────────────────────────────────── */
+.empty-state-icon { opacity: 0.35; }
+
+.browse-row {
+    padding: 0;
+}
+.browse-row > box {
+    padding: 0;
+}
+
+/* Dialog groups get the card look libadwaita uses for preferences. */
+.dialog-group > group > box {
+    background-color: @card_bg_color;
+    border-radius: 12px;
+}
+
+spinbutton, entryrow, passwordentryrow {
+    font-variant-numeric: tabular-nums;
+}

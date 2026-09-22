@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Application
+Version=1.5
+Name=Mount Manager
+GenericName=Network Mounts
+Comment=Mount and manage SMB, NFS, SFTP, WebDAV, FTP shares and external drives
+Comment[de]=SMB-, NFS-, SFTP-, WebDAV- und FTP-Freigaben sowie externe Laufwerke einbinden
+Exec=mount-manager %U
+Icon=mount-manager
+Terminal=false
+Categories=System;Filesystem;GTK;GNOME;
+Keywords=mount;unmount;smb;cifs;nfs;sshfs;sftp;webdav;ftp;network;share;drive;usb;disk;fstab;nas;
+Keywords[de]=einbinden;aushängen;netzwerk;freigabe;laufwerk;usb;festplatte;
+StartupNotify=true
+DBusActivatable=false
+X-GNOME-UsesNotifications=true
