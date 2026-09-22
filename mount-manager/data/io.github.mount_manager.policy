@@ -12,7 +12,7 @@
 -->
 <policyconfig>
   <vendor>Mount Manager</vendor>
-  <vendor_url>https://github.com/o-oJames/docker_gnome/tree/main/mount-manager</vendor_url>
+  <vendor_url>https://github.com/o-oJames/gnome-webtop/tree/main/mount-manager</vendor_url>
 
   <action id="io.github.mount_manager.manage">
     <description>Manage mounted filesystems</description>

@@ -272,8 +272,8 @@ pub fn about(shell: &Shell) {
         .developer_name("Mount Manager contributors")
         .license_type(gtk::License::MitX11)
         .comments("Mount and manage SMB, NFS, SSHFS, WebDAV, FTP shares and external drives.")
-        .website("https://github.com/o-oJames/docker_gnome/tree/main/mount-manager")
-        .issue_url("https://github.com/o-oJames/docker_gnome/issues")
+        .website("https://github.com/o-oJames/gnome-webtop/tree/main/mount-manager")
+        .issue_url("https://github.com/o-oJames/gnome-webtop/issues")
         .copyright("© 2026 Mount Manager contributors")
         .developers(vec!["Mount Manager contributors"])
         .build();

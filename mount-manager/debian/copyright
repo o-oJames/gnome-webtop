@@ -1,6 +1,6 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: mount-manager
-Source: https://github.com/o-oJames/docker_gnome/tree/main/mount-manager
+Source: https://github.com/o-oJames/gnome-webtop/tree/main/mount-manager
 
 Files: *
 Copyright: 2026 Mount Manager contributors
